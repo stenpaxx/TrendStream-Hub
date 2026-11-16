@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TrendStream — Intelligence Video Hub</title>
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.10/dist/umd/supabase.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.26.4/babel.min.js"></script>
+<style>
+  :root { color-scheme: dark; box-sizing: border-box; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); background: #020617; }
+  html, body { background: #020617; margin: 0; }
+  body { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+/* ---------- Icone (SVG inline) ---------- */
+const P = {
+  search: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
+  plus: '<path d="M5 12h14M12 5v14"/>',
+  x: '<path d="M18 6 6 18M6 6l12 12"/>',
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  trash: '<path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+  play: '<path d="M6 3 20 12 6 21Z"/>',
+  clock: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+  edit: '<path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
+  bookmark: '<path d="m19 21-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>',
+  sparkles: '<path d="m12 3 1.9 5.8L20 10.7l-6.1 1.9L12 18.4l-1.9-5.8L4 10.7l6.1-1.9z"/><path d="M19 3v4M21 5h-4"/>',
+  trending: '<path d="m22 7-8.5 8.5-5-5L2 17M16 7h6v6"/>',
+  music: '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
+  dumbbell: '<path d="M6.5 6.5v11M17.5 6.5v11M3 9v6M21 9v6M6.5 12h11"/>',
+  cpu: '<rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/>',
+  building: '<rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4M8 6h.01M12 6h.01M16 6h.01M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01"/>',
+  hardhat: '<path d="M2 18a1 1 0 0 0 1 1h18a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1zM10 10V5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5M4 15v-3a6 6 0 0 1 6-6M14 6a6 6 0 0 1 6 6v3"/>',
+  wrench: '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94z"/>',
+  baby: '<path d="M9 12h.01M15 12h.01M10 16c.5.3 1.2.5 2 .5s1.5-.2 2-.5M19 6.3a9 9 0 0 1 1.8 3.9 2 2 0 0 1 0 3.6 9 9 0 0 1-17.6 0 2 2 0 0 1 0-3.6A9 9 0 0 1 12 3c2 0 3.5 1.1 3.5 2.5s-.9 2.5-2 2.5"/>',
+  checksq: '<path d="m9 11 3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>',
+  square: '<rect x="3" y="3" width="18" height="18" rx="2"/>',
+  logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>',
+};
+const Icon = ({ n, c = 'w-4 h-4' }) => (
+  <svg className={c} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" dangerouslySetInnerHTML={{ __html: P[n] }} />
+);
+
+/* ---------- Supabase ---------- */
+const SB_URL = 'https://mtkyqxqquqoiwbubjqnj.supabase.co';
+const SB_KEY = 'sb_publishable_Fa0zxNJBLViN1PeVCk6bsw_1Z8KvGbv'; // chiave pubblica: la sicurezza è garantita dalle regole RLS
+const sb = window.supabase.createClient(SB_URL, SB_KEY);
+const uid = () => Math.random().toString(36).substring(2, 9);
+const fromRow = (r) => ({
+  id: r.id, title: r.title, category: r.category, videoUrl: r.video_url, thumbnailUrl: r.thumbnail_url || '',
+  trendPercentage: r.trend_percentage || 'Nuovo', duration: r.duration || '—', personalNotes: r.personal_notes || '',
+  timestamps: r.timestamps || [], isBookmarked: r.is_bookmarked,
+});
+function useStore() {
+  const [videos, setVideos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  useEffect(() => {
+    sb.from('videos').select('*').order('created_at', { ascending: false }).then(({ data, error }) => {
+      if (error) setError('Impossibile caricare i video.'); else setVideos(data.map(fromRow));
+      setLoading(false);
+    });
+  }, []);
+  const local = (id, fn) => setVideos(vs => vs.map(v => v.id === id ? fn(v) : v));
+  const upd = async (id, fields, msg) => { const { error } = await sb.from('videos').update(fields).eq('id', id); if (error) setError(msg); };
+  return {
+    videos, loading, error, clearError: () => setError(''),
+    add: async (d) => {
+      const { data, error } = await sb.from('videos').insert({
+        title: d.title, category: d.category, video_url: d.videoUrl, thumbnail_url: d.thumbnailUrl || null,
+        trend_percentage: d.trendPercentage, duration: d.duration, personal_notes: d.personalNotes || '',
+      }).select().single();
+      if (error) return setError('Impossibile salvare il video.');
+      setVideos(vs => [fromRow(data), ...vs]);
+    },
+    remove: async (id) => {
+      const prev = videos; setVideos(vs => vs.filter(v => v.id !== id));
+      const { error } = await sb.from('videos').delete().eq('id', id);
+      if (error) { setVideos(prev); setError('Impossibile eliminare il video.'); }
+    },
+    setNotes: (id, n) => { local(id, v => ({ ...v, personalNotes: n })); return upd(id, { personal_notes: n }, 'Impossibile salvare le note.'); },
+    addTs: (id, time, label) => {
+      const next = [...videos.find(x => x.id === id).timestamps, { id: uid(), time, label }];
+      local(id, v => ({ ...v, timestamps: next })); return upd(id, { timestamps: next }, 'Impossibile salvare il timestamp.');
+    },
+    removeTs: (id, tid) => {
+      const next = videos.find(x => x.id === id).timestamps.filter(t => t.id !== tid);
+      local(id, v => ({ ...v, timestamps: next })); return upd(id, { timestamps: next }, 'Impossibile eliminare il timestamp.');
+    },
+  };
+}
+
+/* ---------- Categorie ---------- */
+const CATEGORIES = [
+  { key: 'Fitness', label: 'Fitness & Workout', icon: 'dumbbell', trend: '+340%', grad: 'from-cyan-600 to-slate-800' },
+  { key: 'Tech', label: 'Tech & AI', icon: 'cpu', trend: '+510%', grad: 'from-indigo-600 to-slate-800' },
+  { key: 'Finanza', label: 'Finanza & Borsa', icon: 'trending', trend: '+280%', grad: 'from-emerald-600 to-slate-800' },
+  { key: 'Musica', label: 'Musica', icon: 'music', trend: '+190%', grad: 'from-fuchsia-600 to-slate-800' },
+  { key: 'Architettura', label: 'Architettura & Arte', icon: 'building', trend: '+220%', grad: 'from-sky-600 to-slate-800' },
+  { key: 'Ingegneria', label: 'Ingegneria & Cantieri', icon: 'hardhat', trend: '+150%', grad: 'from-orange-600 to-slate-800' },
+  { key: 'DIY', label: 'Fai da Te (DIY)', icon: 'wrench', trend: '+210%', grad: 'from-amber-600 to-slate-800' },
+  { key: 'Kids', label: 'Contenuti per Bimbi', icon: 'baby', trend: '+890%', grad: 'from-pink-600 to-slate-800' },
+];
+const gradOf = (k) => (CATEGORIES.find(c => c.key === k) || CATEGORIES[0]).grad;
+
+/* ---------- Modale video ---------- */
+function VideoModal({ video, store, onClose }) {
+  const [notes, setNotes] = useState(video.personalNotes || '');
+  const [time, setTime] = useState('');
+  const [label, setLabel] = useState('');
+  const [saved, setSaved] = useState(false);
+  useEffect(() => setNotes(video.personalNotes || ''), [video.id]);
+  const save = () => { store.setNotes(video.id, notes); setSaved(true); setTimeout(() => setSaved(false), 2000); };
+  const addTs = () => { if (!time || !label) return; store.addTs(video.id, time, label); setTime(''); setLabel(''); };
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-3 overflow-y-auto">
+      <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-4xl overflow-hidden shadow-2xl text-slate-100 flex flex-col max-h-[90vh]">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800 bg-slate-950/50 gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="text-xs bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 px-2.5 py-1 rounded-full font-medium">{video.category}</span>
+            <h2 className="text-base font-bold text-white truncate">{video.title}</h2>
+          </div>
+          <button onClick={onClose} className="text-slate-400 hover:text-white p-2 rounded-xl bg-slate-800/50 hover:bg-slate-800"><Icon n="x" c="w-5 h-5" /></button>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 flex-1 overflow-y-auto">
+          <div className="lg:col-span-2 p-5 flex flex-col space-y-5 lg:border-r border-slate-800/80">
+            <div className={`relative aspect-video bg-gradient-to-br ${gradOf(video.category)} rounded-2xl overflow-hidden border border-slate-800 flex items-center justify-center`}>
+              <a href={video.videoUrl} target="_blank" rel="noopener noreferrer" className="w-16 h-16 rounded-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 flex items-center justify-center shadow-lg transition-transform hover:scale-110"><Icon n="play" c="w-7 h-7 fill-slate-950 ml-1" /></a>
+            </div>
+            <div className="space-y-3 bg-slate-950/50 border border-slate-800/80 rounded-2xl p-4">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5"><Icon n="edit" c="w-3.5 h-3.5 text-cyan-400" /> Note Personali</label>
+                <button onClick={save} className="text-xs bg-cyan-500/10 text-cyan-400 px-3 py-1 rounded-lg font-semibold flex items-center gap-1">
+                  <Icon n={saved ? 'check' : 'sparkles'} c={`w-3.5 h-3.5 ${saved ? 'text-emerald-400' : ''}`} /> {saved ? 'Salvato!' : 'Salva'}
+                </button>
+              </div>
+              <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={3} className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-cyan-500 resize-none" />
+            </div>
+          </div>
+          <div className="p-5 flex flex-col space-y-5 bg-slate-950/30">
+            <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2"><Icon n="clock" c="w-4 h-4 text-cyan-400" /> Timestamp Chiave</h3>
+            <div className="space-y-2.5 max-h-56 overflow-y-auto pr-1">
+              {video.timestamps.map(ts => (
+                <div key={ts.id} className="bg-slate-900 border border-slate-800 rounded-xl p-3 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-bold bg-cyan-500/10 text-cyan-400 px-2.5 py-1 rounded-md">{ts.time}</span>
+                    <span className="text-sm text-slate-200">{ts.label}</span>
+                  </div>
+                  <button onClick={() => store.removeTs(video.id, ts.id)} className="text-slate-500 hover:text-red-400"><Icon n="trash" c="w-3.5 h-3.5" /></button>
+                </div>
+              ))}
+            </div>
+            <div className="pt-4 border-t border-slate-800 space-y-3 mt-auto">
+              <div className="grid grid-cols-3 gap-2">
+                <input placeholder="02:15" value={time} onChange={e => setTime(e.target.value)} className="bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 text-center font-mono" />
+                <input placeholder="Descrizione..." value={label} onChange={e => setLabel(e.target.value)} onKeyDown={e => e.key === 'Enter' && addTs()} className="bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 col-span-2" />
+              </div>
+              <button onClick={addTs} className="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold py-2 rounded-lg text-xs border border-slate-700">Aggiungi Timestamp</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Widget per categoria ---------- */
+const Card = ({ title, sub, icon, color, children }) => (
+  <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 shadow-2xl text-slate-100 space-y-4">
+    <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+      <div><h2 className="text-lg font-bold text-white">{title}</h2><p className="text-xs text-slate-400">{sub}</p></div>
+      <Icon n={icon} c={`w-6 h-6 shrink-0 ml-3 ${color}`} />
+    </div>
+    {children}
+  </div>
+);
+const inp = 'w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 mt-1 text-sm text-white';
+
+function KelliGenWidget() {
+  const [mins, setMins] = useState(15);
+  const [done, setDone] = useState(false);
+  return (
+    <Card title="Kelli-Gen™ Workout Synthesizer" sub="Generatore di circuiti basato sui video di fitness salvati." icon="dumbbell" color="text-cyan-400">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <select value={mins} onChange={e => { setMins(Number(e.target.value)); setDone(false); }} className="bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-sm text-white">
+          <option value={10}>10 Minuti (Flash)</option><option value={15}>15 Minuti (EMOM)</option><option value={30}>30 Minuti (Endurance)</option>
+        </select>
+        <button onClick={() => setDone(true)} className="bg-cyan-600 hover:bg-cyan-500 font-semibold py-2.5 rounded-lg text-sm text-slate-950">Genera Circuito</button>
+      </div>
+      {done && <p className="text-sm text-emerald-400 flex items-center gap-2"><Icon n="check" /> Circuito di {mins} minuti generato con successo!</p>}
+    </Card>
+  );
+}
+function FinancialDecoderWidget() {
+  const [checks, setChecks] = useState([
+    { id: '1', rule: 'Rischio/Rendimento verificato (Min 1:2)', checked: false },
+    { id: '2', rule: 'Stop-loss posizionato sotto supporto chiave', checked: false },
+  ]);
+  return (
+    <Card title="Financial Decoder & Strategy Matrix" sub="Checklist operativa pre-trade e analisi macro." icon="trending" color="text-emerald-400">
+      <div className="space-y-2">
+        {checks.map(c => (
+          <div key={c.id} onClick={() => setChecks(checks.map(x => x.id === c.id ? { ...x, checked: !x.checked } : x))} className="bg-slate-950 border border-slate-800 rounded-xl p-3.5 flex items-center justify-between cursor-pointer">
+            <span className={`text-sm ${c.checked ? 'line-through text-slate-400' : 'text-white'}`}>{c.rule}</span>
+            <Icon n={c.checked ? 'checksq' : 'square'} c={`w-5 h-5 shrink-0 ${c.checked ? 'text-emerald-400' : 'text-slate-600'}`} />
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+function MaterialCutWidget() {
+  const [stock, setStock] = useState(2400);
+  return (
+    <Card title="DIY Material & Cut Optimizer" sub="Calcolatore tagli e materiali per eliminare gli sprechi." icon="wrench" color="text-amber-400">
+      <div><label className="text-xs text-slate-400">Lunghezza Barra Standard (mm)</label>
+        <input type="number" value={stock} onChange={e => setStock(Number(e.target.value))} className={inp} /></div>
+    </Card>
+  );
+}
+function AiViralEngine() {
+  const [ch, setCh] = useState('Sblauz l’Alieno');
+  return (
+    <Card title="Kids AI Viral Engine & Retention Builder" sub="Generatore di script e retention per contenuti infantili 3D." icon="baby" color="text-pink-400">
+      <div><label className="text-xs text-slate-400">Nome Personaggio IP</label>
+        <input value={ch} onChange={e => setCh(e.target.value)} className={inp} /></div>
+    </Card>
+  );
+}
+function ArchitectureVisualizerWidget() {
+  return (
+    <Card title="AI Architectural Visualizer & Rendering Engine" sub="Generatore di prompt e moodboard per Midjourney, Lumion e Unreal Engine." icon="building" color="text-cyan-400">
+      <div className="bg-slate-950 p-4 rounded-xl font-mono text-xs text-slate-300">Architectural photography of a contemporary minimalist villa, glass walls, 8k resolution --ar 16:9</div>
+    </Card>
+  );
+}
+
+function TechWidget() {
+  const [items, setItems] = useState([
+    { id: '1', text: 'Nuovo modello AI da testare', done: false },
+    { id: '2', text: 'Tutorial da replicare', done: false },
+  ]);
+  const [txt, setTxt] = useState('');
+  const add = () => { if (!txt.trim()) return; setItems([...items, { id: uid(), text: txt.trim(), done: false }]); setTxt(''); };
+  return (
+    <Card title="Tech Radar & AI Toolkit" sub="Lista di strumenti e tutorial da provare dai video di tendenza." icon="cpu" color="text-indigo-400">
+      <div className="space-y-2">
+        {items.map(i => (
+          <div key={i.id} className="bg-slate-950 border border-slate-800 rounded-xl p-3.5 flex items-center justify-between gap-3">
+            <div onClick={() => setItems(items.map(x => x.id === i.id ? { ...x, done: !x.done } : x))} className="flex items-center gap-3 cursor-pointer min-w-0">
+              <Icon n={i.done ? 'checksq' : 'square'} c={`w-5 h-5 shrink-0 ${i.done ? 'text-emerald-400' : 'text-slate-600'}`} />
+              <span className={`text-sm ${i.done ? 'line-through text-slate-400' : 'text-white'}`}>{i.text}</span>
+            </div>
+            <button onClick={() => setItems(items.filter(x => x.id !== i.id))} className="text-slate-500 hover:text-red-400"><Icon n="trash" c="w-3.5 h-3.5" /></button>
+          </div>
+        ))}
+      </div>
+      <div className="flex gap-2">
+        <input value={txt} onChange={e => setTxt(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} placeholder="Aggiungi strumento o tutorial..." className="flex-1 bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-sm text-white" />
+        <button onClick={add} className="bg-indigo-500 hover:bg-indigo-400 text-white font-semibold px-4 rounded-lg text-sm">Aggiungi</button>
+      </div>
+    </Card>
+  );
+}
+function MusicWidget() {
+  const [bpm, setBpm] = useState(120);
+  const [bars, setBars] = useState(16);
+  const secs = bpm > 0 ? Math.round((bars * 4 * 60) / bpm) : 0;
+  return (
+    <Card title="Music Tempo & Arrangement Planner" sub="Calcola la durata di un arrangiamento da BPM e battute (4/4)." icon="music" color="text-fuchsia-400">
+      <div className="grid grid-cols-2 gap-4">
+        <div><label className="text-xs text-slate-400">BPM</label><input type="number" value={bpm} onChange={e => setBpm(Number(e.target.value))} className={inp} /></div>
+        <div><label className="text-xs text-slate-400">Battute</label><input type="number" value={bars} onChange={e => setBars(Number(e.target.value))} className={inp} /></div>
+      </div>
+      <p className="text-sm text-fuchsia-300">Durata: {Math.floor(secs / 60)}:{String(secs % 60).padStart(2, '0')} ({bars * 4} battiti)</p>
+    </Card>
+  );
+}
+function EngineeringWidget() {
+  const [l, setL] = useState(5);
+  const [w, setW] = useState(4);
+  const [t, setT] = useState(12);
+  const vol = l * w * (t / 100);
+  return (
+    <Card title="Site Concrete Volume Calculator" sub="Volume di calcestruzzo per una soletta, con 5% di scarto." icon="hardhat" color="text-orange-400">
+      <div className="grid grid-cols-3 gap-3">
+        <div><label className="text-xs text-slate-400">Lunghezza (m)</label><input type="number" value={l} onChange={e => setL(Number(e.target.value))} className={inp} /></div>
+        <div><label className="text-xs text-slate-400">Larghezza (m)</label><input type="number" value={w} onChange={e => setW(Number(e.target.value))} className={inp} /></div>
+        <div><label className="text-xs text-slate-400">Spessore (cm)</label><input type="number" value={t} onChange={e => setT(Number(e.target.value))} className={inp} /></div>
+      </div>
+      <p className="text-sm text-orange-300">Volume: {vol.toFixed(2)} m³ — da ordinare: {(vol * 1.05).toFixed(2)} m³</p>
+    </Card>
+  );
+}
+
+const ytId = (url) => {
+  try {
+    const u = new URL(url.trim());
+    if (u.hostname.includes('youtu.be')) return u.pathname.slice(1) || null;
+    if (u.hostname.includes('youtube.com')) {
+      if (u.searchParams.get('v')) return u.searchParams.get('v');
+      const m = u.pathname.match(/\/(shorts|embed|live)\/([\w-]{6,})/);
+      if (m) return m[2];
+    }
+  } catch (e) {}
+  return null;
+};
+const validUrl = (s) => { try { return /^https?:$/.test(new URL(s.trim()).protocol); } catch (e) { return false; } };
+
+function AddVideoModal({ category, onAdd, onClose }) {
+  const [f, setF] = useState({ url: '', title: '', duration: '', category, notes: '' });
+  const [err, setErr] = useState('');
+  const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
+  const id = ytId(f.url);
+  useEffect(() => {
+    if (!id) return;
+    fetch('https://www.youtube.com/oembed?url=' + encodeURIComponent(f.url.trim()) + '&format=json')
+      .then(r => r.ok ? r.json() : null).then(d => { if (d && d.title) setF(p => ({ ...p, title: p.title || d.title })); }).catch(() => {});
+  }, [id]);
+  const submit = () => {
+    if (!validUrl(f.url)) return setErr('Inserisci un link valido (https://...).');
+    if (!f.title.trim()) return setErr('Inserisci un titolo.');
+    onAdd({
+      title: f.title.trim(), category: f.category, videoUrl: f.url.trim(),
+      thumbnailUrl: id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : '',
+      trendPercentage: 'Nuovo', duration: f.duration.trim() || '—', personalNotes: f.notes.trim(), timestamps: [],
+    });
+    onClose();
+  };
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-3 overflow-y-auto">
+      <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-lg shadow-2xl text-slate-100">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800">
+          <h2 className="font-bold text-white">Aggiungi video da link</h2>
+          <button onClick={onClose} className="text-slate-400 hover:text-white p-1.5 rounded-lg bg-slate-800/50"><Icon n="x" c="w-5 h-5" /></button>
+        </div>
+        <div className="p-5 space-y-4">
+          <div>
+            <label className="text-xs text-slate-400">Link del video *</label>
+            <input autoFocus value={f.url} onChange={set('url')} placeholder="https://www.youtube.com/watch?v=..." className={inp} />
+            {f.url && <p className={`text-xs mt-1 ${id ? 'text-emerald-400' : 'text-slate-500'}`}>{id ? `YouTube riconosciuto (ID: ${id})` : 'Link generico: verrà salvato così com’è.'}</p>}
+          </div>
+          <div><label className="text-xs text-slate-400">Titolo *</label><input value={f.title} onChange={set('title')} className={inp} /></div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><label className="text-xs text-slate-400">Durata</label><input value={f.duration} onChange={set('duration')} placeholder="12:30" className={inp} /></div>
+            <div><label className="text-xs text-slate-400">Categoria</label>
+              <select value={f.category} onChange={set('category')} className={inp}>{CATEGORIES.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}</select></div>
+          </div>
+          <div><label className="text-xs text-slate-400">Note</label><textarea rows={2} value={f.notes} onChange={set('notes')} className={inp + ' resize-none'} /></div>
+          {err && <p className="text-xs text-red-400">{err}</p>}
+          <button onClick={submit} className="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-semibold py-2.5 rounded-xl text-sm">Salva video</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+function Thumb({ v }) {
+  const [bad, setBad] = useState(false);
+  return (
+    <div className={`relative overflow-hidden h-24 bg-gradient-to-br ${gradOf(v.category)} flex items-center justify-center`}>
+      {v.thumbnailUrl && !bad && <img src={v.thumbnailUrl} onError={() => setBad(true)} className="absolute inset-0 w-full h-full object-cover" alt="" />}
+      <Icon n="play" c="relative w-7 h-7 text-white/80" />
+    </div>
+  );
+}
+
+/* ---------- App ---------- */
+function App() {
+  const store = useStore();
+  const [active, setActive] = useState('Fitness');
+  const [query, setQuery] = useState('');
+  const [openId, setOpenId] = useState(null);
+  const [showAdd, setShowAdd] = useState(false);
+  const meta = CATEGORIES.find(c => c.key === active);
+  const q = query.trim().toLowerCase();
+  const list = store.videos.filter(v => v.category === active && (!q || v.title.toLowerCase().includes(q) || (v.personalNotes || '').toLowerCase().includes(q)));
+  const openVideo = store.videos.find(v => v.id === openId);
+
+  const addSample = () => store.add({
+    title: `Trend Globale in ${active} (Sincronizzato)`, category: active, videoUrl: 'https://www.youtube.com',
+    trendPercentage: '+450%', duration: '12:30', personalNotes: 'Nota salvata automaticamente dai feed di tendenza.',
+    timestamps: [{ id: uid(), time: '01:00', label: 'Punto chiave iniziale' }],
+  });
+
+  const widget = {
+    Fitness: <KelliGenWidget />, Finanza: <FinancialDecoderWidget />, DIY: <MaterialCutWidget />,
+    Kids: <AiViralEngine />, Architettura: <ArchitectureVisualizerWidget />,
+    Tech: <TechWidget />, Musica: <MusicWidget />, Ingegneria: <EngineeringWidget />,
+  }[active] || (
+    <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-10 text-center space-y-2">
+      <h3 className="text-xl font-bold text-white">Dashboard Dedicata: {meta.label}</h3>
+      <p className="text-xs text-slate-400">Organizza e analizza i video di tendenza globali per questa categoria.</p>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex selection:bg-cyan-500 selection:text-slate-950">
+      <aside className="w-72 border-r border-slate-800 bg-slate-900/40 p-6 hidden lg:flex flex-col sticky top-0 h-screen">
+        <div className="flex items-center gap-3 mb-8">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-cyan-500/20"><Icon n="sparkles" c="w-5 h-5 text-white" /></div>
+          <div><h1 className="font-bold text-lg text-white">TrendStream</h1><p className="text-xs text-slate-400">Intelligence Video Hub</p></div>
+        </div>
+        <nav className="space-y-1 overflow-y-auto pr-1">
+          {CATEGORIES.map(c => (
+            <button key={c.key} onClick={() => setActive(c.key)} className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${active === c.key ? 'bg-gradient-to-r from-cyan-500/20 to-indigo-500/10 text-cyan-400 border border-cyan-500/30' : 'text-slate-400 hover:bg-slate-900'}`}>
+              <div className="flex items-center gap-3"><Icon n={c.icon} /><span>{c.label}</span></div>
+              <span className="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">{c.trend}</span>
+            </button>
+          ))}
+        </nav>
+      </aside>
+
+      <main className="flex-1 flex flex-col min-h-screen min-w-0">
+        <header className="border-b border-slate-800 bg-slate-950/90 backdrop-blur-md px-4 md:px-8 py-4 sticky top-0 z-20 space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-lg md:text-xl font-bold text-white flex items-center gap-2 min-w-0"><Icon n={meta.icon} c="w-5 h-5 shrink-0" /> <span className="truncate">{meta.label}</span></h2>
+            <div className="flex items-center gap-3">
+              <div className="relative hidden md:block">
+                <span className="text-slate-500 absolute left-3 top-1/2 -translate-y-1/2"><Icon n="search" /></span>
+                <input placeholder="Cerca tra i video..." value={query} onChange={e => setQuery(e.target.value)} className="bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-cyan-500 w-64" />
+              </div>
+              <button onClick={() => setShowAdd(true)} className="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-semibold px-3 md:px-4 py-2 rounded-xl text-sm shadow-lg shadow-cyan-500/20 flex items-center gap-2 whitespace-nowrap"><Icon n="plus" /> <span className="hidden sm:inline">Aggiungi Video</span></button>
+              <button onClick={() => sb.auth.signOut()} title="Esci" className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white"><Icon n="logout" /></button>
+            </div>
+          </div>
+          <div className="lg:hidden flex gap-2 overflow-x-auto pb-1">
+            {CATEGORIES.map(c => (
+              <button key={c.key} onClick={() => setActive(c.key)} className={`shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border ${active === c.key ? 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30' : 'text-slate-400 border-slate-800 bg-slate-900'}`}><Icon n={c.icon} c="w-3.5 h-3.5" />{c.key}</button>
+            ))}
+          </div>
+          <div className="relative md:hidden">
+            <span className="text-slate-500 absolute left-3 top-1/2 -translate-y-1/2"><Icon n="search" /></span>
+            <input placeholder="Cerca tra i video..." value={query} onChange={e => setQuery(e.target.value)} className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-cyan-500" />
+          </div>
+        </header>
+
+        <div className="p-4 md:p-8 space-y-8 flex-1">
+          {store.error && <div onClick={store.clearError} className="bg-red-500/10 border border-red-500/30 text-red-300 text-sm rounded-xl p-3 cursor-pointer">{store.error} (tocca per chiudere)</div>}
+          {widget}
+          {store.loading && <p className="text-sm text-slate-400">Carico i tuoi video...</p>}
+          {!store.loading && list.length === 0 && <p className="text-sm text-slate-500 text-center py-6">Nessun video in questa categoria: tocca “Aggiungi Video” per incollare il primo link.</p>}
+          {list.length > 0 && (
+            <div className="space-y-4 pt-6 border-t border-slate-800/80">
+              <h3 className="text-base font-bold text-white flex items-center gap-2"><Icon n="bookmark" c="w-4 h-4 text-cyan-400" /> Video Salvati & Sincronizzati ({list.length})</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                {list.map(v => (
+                  <div key={v.id} onClick={() => setOpenId(v.id)} className="group relative bg-slate-900/60 border border-slate-800 rounded-2xl overflow-hidden hover:border-slate-700 transition-all cursor-pointer">
+                    <Thumb v={v} />
+                    <div className="p-4 space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[10px] bg-cyan-500/10 text-cyan-400 px-2 py-0.5 rounded font-bold">{v.duration}</span>
+                        <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded font-bold">{v.trendPercentage}</span>
+                      </div>
+                      <h4 className="text-sm font-bold text-white line-clamp-2">{v.title}</h4>
+                      <p className="text-xs text-slate-400 line-clamp-2">{v.personalNotes}</p>
+                    </div>
+                    <button onClick={e => { e.stopPropagation(); store.remove(v.id); }} className="absolute top-2 right-2 p-1.5 rounded-lg bg-slate-950/70 text-slate-300 hover:text-red-400"><Icon n="trash" c="w-3.5 h-3.5" /></button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </main>
+      {showAdd && <AddVideoModal category={active} onAdd={store.add} onClose={() => setShowAdd(false)} />}
+      {openVideo && <VideoModal video={openVideo} store={store} onClose={() => setOpenId(null)} />}
+    </div>
+  );
+}
+function AuthScreen() {
+  const [mode, setMode] = useState('login');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [msg, setMsg] = useState({ type: '', text: '' });
+  const [busy, setBusy] = useState(false);
+  const submit = async (e) => {
+    e.preventDefault(); setMsg({ type: '', text: '' });
+    if (password.length < 6) return setMsg({ type: 'err', text: 'La password deve avere almeno 6 caratteri.' });
+    setBusy(true);
+    const { data, error } = mode === 'login' ? await sb.auth.signInWithPassword({ email, password }) : await sb.auth.signUp({ email, password });
+    setBusy(false);
+    if (error) return setMsg({ type: 'err', text: error.message });
+    if (mode === 'signup' && !data.session) setMsg({ type: 'ok', text: 'Registrazione riuscita! Controlla la tua email, clicca sul link di conferma e poi accedi.' });
+  };
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-4">
+      <form onSubmit={submit} className="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4 shadow-2xl">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center"><Icon n="sparkles" c="w-5 h-5 text-white" /></div>
+          <div><h1 className="font-bold text-lg text-white">TrendStream</h1><p className="text-xs text-slate-400">{mode === 'login' ? 'Accedi al tuo hub' : 'Crea il tuo account'}</p></div>
+        </div>
+        <div><label className="text-xs text-slate-400">Email</label><input type="email" required value={email} onChange={e => setEmail(e.target.value)} className={inp} /></div>
+        <div><label className="text-xs text-slate-400">Password</label><input type="password" required value={password} onChange={e => setPassword(e.target.value)} className={inp} /></div>
+        {msg.text && <p className={`text-xs ${msg.type === 'err' ? 'text-red-400' : 'text-emerald-400'}`}>{msg.text}</p>}
+        <button disabled={busy} className="w-full bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50 text-slate-950 font-semibold py-2.5 rounded-xl text-sm">{busy ? 'Attendi...' : mode === 'login' ? 'Accedi' : 'Registrati'}</button>
+        <button type="button" onClick={() => { setMode(mode === 'login' ? 'signup' : 'login'); setMsg({ type: '', text: '' }); }} className="w-full text-xs text-slate-400 hover:text-cyan-400">{mode === 'login' ? 'Non hai un account? Registrati' : 'Hai già un account? Accedi'}</button>
+      </form>
+    </div>
+  );
+}
+function Root() {
+  const [session, setSession] = useState(undefined);
+  useEffect(() => {
+    sb.auth.getSession().then(({ data }) => setSession(data.session));
+    const { data } = sb.auth.onAuthStateChange((_e, s) => setSession(s));
+    return () => data.subscription.unsubscribe();
+  }, []);
+  if (session === undefined) return <div className="min-h-screen flex items-center justify-center text-slate-300 text-sm">Caricamento...</div>;
+  return session ? <App key={session.user.id} /> : <AuthScreen />;
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<Root />);
+</script>
+</body>
+</html>
