@@ -43,6 +43,8 @@ const P = {
   checksq: '<path d="m9 11 3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>',
   square: '<rect x="3" y="3" width="18" height="18" rx="2"/>',
   logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>',
+  flame: '<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>',
+  refresh: '<path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5M21 12a9 9 0 0 1-15 6.7L3 16M3 21v-5h5"/>',
 };
 const Icon = ({ n, c = 'w-4 h-4' }) => (
   <svg className={c} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" dangerouslySetInnerHTML={{ __html: P[n] }} />
@@ -371,6 +373,62 @@ function Thumb({ v }) {
   );
 }
 
+const fmtN = (n) => n >= 1e6 ? (n / 1e6).toFixed(1).replace('.', ',') + ' Mln' : n >= 1e3 ? Math.round(n / 1e3) + ' K' : String(n);
+
+function TrendingFeed({ category, store }) {
+  const [st, setSt] = useState({ status: 'loading', videos: [], updatedAt: '' });
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    let off = false;
+    setSt({ status: 'loading', videos: [], updatedAt: '' });
+    fetch('/api/trending?category=' + encodeURIComponent(category))
+      .then(async r => { const d = await r.json().catch(() => ({})); if (!r.ok) throw new Error(r.status === 404 ? 'missing_key' : d.error || 'error'); return d; })
+      .then(d => { if (!off) setSt({ status: 'ok', videos: d.videos, updatedAt: d.updatedAt }); })
+      .catch(e => { if (!off) setSt({ status: e.message === 'missing_key' ? 'nokey' : 'error', videos: [], updatedAt: '' }); });
+    return () => { off = true; };
+  }, [category, tick]);
+  const saved = new Set(store.videos.map(v => v.videoUrl));
+  const save = (v) => store.add({ title: v.title, category, videoUrl: v.videoUrl, thumbnailUrl: v.thumbnailUrl, trendPercentage: fmtN(v.viewsPerDay) + '/giorno', duration: v.duration, personalNotes: '' });
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="text-base font-bold text-white flex items-center gap-2"><Icon n="flame" c="w-4 h-4 text-orange-400" /> In tendenza ora in Italia</h3>
+        <button onClick={() => setTick(t => t + 1)} className="text-xs text-slate-400 hover:text-white flex items-center gap-1.5"><Icon n="refresh" c="w-3.5 h-3.5" /> Aggiorna</button>
+      </div>
+      {st.status === 'loading' && <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">{[0, 1, 2].map(i => <div key={i} className="h-56 rounded-2xl bg-slate-900/60 border border-slate-800 animate-pulse" />)}</div>}
+      {st.status === 'nokey' && <div className="bg-amber-500/10 border border-amber-500/30 text-amber-200 text-sm rounded-xl p-4">Il feed automatico non è ancora attivo: manca la chiave YouTube nelle impostazioni di Vercel.</div>}
+      {st.status === 'error' && <div className="bg-red-500/10 border border-red-500/30 text-red-300 text-sm rounded-xl p-4">Non riesco a leggere le tendenze in questo momento. Riprova tra poco con “Aggiorna”.</div>}
+      {st.status === 'ok' && st.videos.length === 0 && <p className="text-sm text-slate-500">Nessun video trovato per questa categoria.</p>}
+      {st.status === 'ok' && st.videos.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {st.videos.map((v, i) => (
+            <div key={v.id} className="bg-slate-900/60 border border-slate-800 rounded-2xl overflow-hidden flex flex-col">
+              <a href={v.videoUrl} target="_blank" rel="noopener noreferrer" className="relative block aspect-video bg-slate-800">
+                {v.thumbnailUrl && <img src={v.thumbnailUrl} alt="" loading="lazy" className="absolute inset-0 w-full h-full object-cover" />}
+                <span className="absolute top-2 left-2 text-[10px] font-bold bg-slate-950/80 text-white px-2 py-0.5 rounded">#{i + 1}</span>
+                <span className="absolute bottom-2 right-2 text-[10px] font-bold bg-slate-950/80 text-white px-2 py-0.5 rounded">{v.duration}</span>
+              </a>
+              <div className="p-4 flex-1 flex flex-col justify-between gap-3">
+                <div>
+                  <h4 className="text-sm font-bold text-white line-clamp-2">{v.title}</h4>
+                  <p className="text-xs text-slate-400 mt-1 truncate">{v.channel}</p>
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 text-[10px] font-bold">
+                    <span className="bg-orange-500/15 text-orange-300 px-2 py-0.5 rounded">🔥 {fmtN(v.viewsPerDay)}/giorno</span>
+                    <span className="text-slate-500">{fmtN(v.views)} views</span>
+                  </div>
+                  <button disabled={saved.has(v.videoUrl)} onClick={() => save(v)} className="text-xs font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1.5 bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 disabled:opacity-50 disabled:cursor-default"><Icon n={saved.has(v.videoUrl) ? 'check' : 'bookmark'} c="w-3.5 h-3.5" />{saved.has(v.videoUrl) ? 'Salvato' : 'Salva'}</button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ---------- App ---------- */
 function App() {
   const store = useStore();
@@ -411,7 +469,7 @@ function App() {
           {CATEGORIES.map(c => (
             <button key={c.key} onClick={() => setActive(c.key)} className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${active === c.key ? 'bg-gradient-to-r from-cyan-500/20 to-indigo-500/10 text-cyan-400 border border-cyan-500/30' : 'text-slate-400 hover:bg-slate-900'}`}>
               <div className="flex items-center gap-3"><Icon n={c.icon} /><span>{c.label}</span></div>
-              <span className="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">{c.trend}</span>
+              
             </button>
           ))}
         </nav>
@@ -426,7 +484,7 @@ function App() {
                 <span className="text-slate-500 absolute left-3 top-1/2 -translate-y-1/2"><Icon n="search" /></span>
                 <input placeholder="Cerca tra i video..." value={query} onChange={e => setQuery(e.target.value)} className="bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-cyan-500 w-64" />
               </div>
-              <button onClick={() => setShowAdd(true)} className="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-semibold px-3 md:px-4 py-2 rounded-xl text-sm shadow-lg shadow-cyan-500/20 flex items-center gap-2 whitespace-nowrap"><Icon n="plus" /> <span className="hidden sm:inline">Aggiungi Video</span></button>
+              <button onClick={() => setShowAdd(true)} className="bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 font-semibold px-3 md:px-4 py-2 rounded-xl text-sm flex items-center gap-2 whitespace-nowrap"><Icon n="plus" /> <span className="hidden sm:inline">Aggiungi da link</span></button>
               <button onClick={() => sb.auth.signOut()} title="Esci" className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white"><Icon n="logout" /></button>
             </div>
           </div>
@@ -443,12 +501,13 @@ function App() {
 
         <div className="p-4 md:p-8 space-y-8 flex-1">
           {store.error && <div onClick={store.clearError} className="bg-red-500/10 border border-red-500/30 text-red-300 text-sm rounded-xl p-3 cursor-pointer">{store.error} (tocca per chiudere)</div>}
+          <TrendingFeed category={active} store={store} />
           {widget}
           {store.loading && <p className="text-sm text-slate-400">Carico i tuoi video...</p>}
-          {!store.loading && list.length === 0 && <p className="text-sm text-slate-500 text-center py-6">Nessun video in questa categoria: tocca “Aggiungi Video” per incollare il primo link.</p>}
+          {!store.loading && list.length === 0 && <p className="text-sm text-slate-500 text-center py-6">Nessun video in questa categoria: salva un video dal feed in tendenza oppure aggiungi un link.</p>}
           {list.length > 0 && (
             <div className="space-y-4 pt-6 border-t border-slate-800/80">
-              <h3 className="text-base font-bold text-white flex items-center gap-2"><Icon n="bookmark" c="w-4 h-4 text-cyan-400" /> Video Salvati & Sincronizzati ({list.length})</h3>
+              <h3 className="text-base font-bold text-white flex items-center gap-2"><Icon n="bookmark" c="w-4 h-4 text-cyan-400" /> I tuoi video salvati ({list.length})</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 {list.map(v => (
                   <div key={v.id} onClick={() => setOpenId(v.id)} className="group relative bg-slate-900/60 border border-slate-800 rounded-2xl overflow-hidden hover:border-slate-700 transition-all cursor-pointer">
