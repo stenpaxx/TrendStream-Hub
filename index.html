@@ -12,6 +12,7 @@
 <style>
   :root { color-scheme: dark; box-sizing: border-box; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); background: #020617; }
   html, body { background: #020617; margin: 0; }
+  @media print { body * { visibility: hidden; } .print-area, .print-area * { visibility: visible; } .print-area { position: absolute; left: 0; top: 0; width: 100%; padding: 16px; background: #fff !important; } .print-area * { color: #000 !important; background: transparent !important; border-color: #bbb !important; } }
   body { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
 </style>
 </head>
@@ -45,6 +46,7 @@ const P = {
   logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>',
   flame: '<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>',
   refresh: '<path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5M21 12a9 9 0 0 1-15 6.7L3 16M3 21v-5h5"/>',
+  print: '<path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/>',
 };
 const Icon = ({ n, c = 'w-4 h-4' }) => (
   <svg className={c} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" dangerouslySetInnerHTML={{ __html: P[n] }} />
@@ -185,123 +187,6 @@ const Card = ({ title, sub, icon, color, children }) => (
 );
 const inp = 'w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 mt-1 text-sm text-white';
 
-function KelliGenWidget() {
-  const [mins, setMins] = useState(15);
-  const [done, setDone] = useState(false);
-  return (
-    <Card title="Kelli-Gen™ Workout Synthesizer" sub="Generatore di circuiti basato sui video di fitness salvati." icon="dumbbell" color="text-cyan-400">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <select value={mins} onChange={e => { setMins(Number(e.target.value)); setDone(false); }} className="bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-sm text-white">
-          <option value={10}>10 Minuti (Flash)</option><option value={15}>15 Minuti (EMOM)</option><option value={30}>30 Minuti (Endurance)</option>
-        </select>
-        <button onClick={() => setDone(true)} className="bg-cyan-600 hover:bg-cyan-500 font-semibold py-2.5 rounded-lg text-sm text-slate-950">Genera Circuito</button>
-      </div>
-      {done && <p className="text-sm text-emerald-400 flex items-center gap-2"><Icon n="check" /> Circuito di {mins} minuti generato con successo!</p>}
-    </Card>
-  );
-}
-function FinancialDecoderWidget() {
-  const [checks, setChecks] = useState([
-    { id: '1', rule: 'Rischio/Rendimento verificato (Min 1:2)', checked: false },
-    { id: '2', rule: 'Stop-loss posizionato sotto supporto chiave', checked: false },
-  ]);
-  return (
-    <Card title="Financial Decoder & Strategy Matrix" sub="Checklist operativa pre-trade e analisi macro." icon="trending" color="text-emerald-400">
-      <div className="space-y-2">
-        {checks.map(c => (
-          <div key={c.id} onClick={() => setChecks(checks.map(x => x.id === c.id ? { ...x, checked: !x.checked } : x))} className="bg-slate-950 border border-slate-800 rounded-xl p-3.5 flex items-center justify-between cursor-pointer">
-            <span className={`text-sm ${c.checked ? 'line-through text-slate-400' : 'text-white'}`}>{c.rule}</span>
-            <Icon n={c.checked ? 'checksq' : 'square'} c={`w-5 h-5 shrink-0 ${c.checked ? 'text-emerald-400' : 'text-slate-600'}`} />
-          </div>
-        ))}
-      </div>
-    </Card>
-  );
-}
-function MaterialCutWidget() {
-  const [stock, setStock] = useState(2400);
-  return (
-    <Card title="DIY Material & Cut Optimizer" sub="Calcolatore tagli e materiali per eliminare gli sprechi." icon="wrench" color="text-amber-400">
-      <div><label className="text-xs text-slate-400">Lunghezza Barra Standard (mm)</label>
-        <input type="number" value={stock} onChange={e => setStock(Number(e.target.value))} className={inp} /></div>
-    </Card>
-  );
-}
-function AiViralEngine() {
-  const [ch, setCh] = useState('Sblauz l’Alieno');
-  return (
-    <Card title="Kids AI Viral Engine & Retention Builder" sub="Generatore di script e retention per contenuti infantili 3D." icon="baby" color="text-pink-400">
-      <div><label className="text-xs text-slate-400">Nome Personaggio IP</label>
-        <input value={ch} onChange={e => setCh(e.target.value)} className={inp} /></div>
-    </Card>
-  );
-}
-function ArchitectureVisualizerWidget() {
-  return (
-    <Card title="AI Architectural Visualizer & Rendering Engine" sub="Generatore di prompt e moodboard per Midjourney, Lumion e Unreal Engine." icon="building" color="text-cyan-400">
-      <div className="bg-slate-950 p-4 rounded-xl font-mono text-xs text-slate-300">Architectural photography of a contemporary minimalist villa, glass walls, 8k resolution --ar 16:9</div>
-    </Card>
-  );
-}
-
-function TechWidget() {
-  const [items, setItems] = useState([
-    { id: '1', text: 'Nuovo modello AI da testare', done: false },
-    { id: '2', text: 'Tutorial da replicare', done: false },
-  ]);
-  const [txt, setTxt] = useState('');
-  const add = () => { if (!txt.trim()) return; setItems([...items, { id: uid(), text: txt.trim(), done: false }]); setTxt(''); };
-  return (
-    <Card title="Tech Radar & AI Toolkit" sub="Lista di strumenti e tutorial da provare dai video di tendenza." icon="cpu" color="text-indigo-400">
-      <div className="space-y-2">
-        {items.map(i => (
-          <div key={i.id} className="bg-slate-950 border border-slate-800 rounded-xl p-3.5 flex items-center justify-between gap-3">
-            <div onClick={() => setItems(items.map(x => x.id === i.id ? { ...x, done: !x.done } : x))} className="flex items-center gap-3 cursor-pointer min-w-0">
-              <Icon n={i.done ? 'checksq' : 'square'} c={`w-5 h-5 shrink-0 ${i.done ? 'text-emerald-400' : 'text-slate-600'}`} />
-              <span className={`text-sm ${i.done ? 'line-through text-slate-400' : 'text-white'}`}>{i.text}</span>
-            </div>
-            <button onClick={() => setItems(items.filter(x => x.id !== i.id))} className="text-slate-500 hover:text-red-400"><Icon n="trash" c="w-3.5 h-3.5" /></button>
-          </div>
-        ))}
-      </div>
-      <div className="flex gap-2">
-        <input value={txt} onChange={e => setTxt(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} placeholder="Aggiungi strumento o tutorial..." className="flex-1 bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-sm text-white" />
-        <button onClick={add} className="bg-indigo-500 hover:bg-indigo-400 text-white font-semibold px-4 rounded-lg text-sm">Aggiungi</button>
-      </div>
-    </Card>
-  );
-}
-function MusicWidget() {
-  const [bpm, setBpm] = useState(120);
-  const [bars, setBars] = useState(16);
-  const secs = bpm > 0 ? Math.round((bars * 4 * 60) / bpm) : 0;
-  return (
-    <Card title="Music Tempo & Arrangement Planner" sub="Calcola la durata di un arrangiamento da BPM e battute (4/4)." icon="music" color="text-fuchsia-400">
-      <div className="grid grid-cols-2 gap-4">
-        <div><label className="text-xs text-slate-400">BPM</label><input type="number" value={bpm} onChange={e => setBpm(Number(e.target.value))} className={inp} /></div>
-        <div><label className="text-xs text-slate-400">Battute</label><input type="number" value={bars} onChange={e => setBars(Number(e.target.value))} className={inp} /></div>
-      </div>
-      <p className="text-sm text-fuchsia-300">Durata: {Math.floor(secs / 60)}:{String(secs % 60).padStart(2, '0')} ({bars * 4} battiti)</p>
-    </Card>
-  );
-}
-function EngineeringWidget() {
-  const [l, setL] = useState(5);
-  const [w, setW] = useState(4);
-  const [t, setT] = useState(12);
-  const vol = l * w * (t / 100);
-  return (
-    <Card title="Site Concrete Volume Calculator" sub="Volume di calcestruzzo per una soletta, con 5% di scarto." icon="hardhat" color="text-orange-400">
-      <div className="grid grid-cols-3 gap-3">
-        <div><label className="text-xs text-slate-400">Lunghezza (m)</label><input type="number" value={l} onChange={e => setL(Number(e.target.value))} className={inp} /></div>
-        <div><label className="text-xs text-slate-400">Larghezza (m)</label><input type="number" value={w} onChange={e => setW(Number(e.target.value))} className={inp} /></div>
-        <div><label className="text-xs text-slate-400">Spessore (cm)</label><input type="number" value={t} onChange={e => setT(Number(e.target.value))} className={inp} /></div>
-      </div>
-      <p className="text-sm text-orange-300">Volume: {vol.toFixed(2)} m³ — da ordinare: {(vol * 1.05).toFixed(2)} m³</p>
-    </Card>
-  );
-}
-
 const ytId = (url) => {
   try {
     const u = new URL(url.trim());
@@ -373,17 +258,135 @@ function Thumb({ v }) {
   );
 }
 
+const INSIGHTS = {
+  Tech: { title: 'AI Workflow Blueprint', icon: 'cpu', color: 'text-indigo-400', btn: 'Genera blueprint', input: 'Recensioni virali, confronti, tutorial AI', outputs: ['Stack e mappa del flusso', 'Prompt pronto da copiare', 'Tabella pro/contro', 'Guida alla scelta'] },
+  Finanza: { title: 'Radar del Sentiment & Consensus', icon: 'trending', color: 'text-emerald-400', btn: 'Genera radar', input: 'Analisi di mercato, macro-trend, strategie', outputs: ['Termometro del sentiment', 'Punti di consenso', 'Voce fuori dal coro', 'Glossario lampo'], note: 'Solo educativo: non è consulenza finanziaria. Il sentiment è una stima dell’AI su titoli, descrizioni e commenti.' },
+  DIY: { title: 'Project Kit & Lista della Spesa', icon: 'wrench', color: 'text-amber-400', btn: 'Genera kit', input: 'Progetti virali, restauro, falegnameria', outputs: ['Lista della spesa con costi', 'Attrezzi', 'Piano di taglio', 'Passo passo ed errori da evitare'], extra: { label: 'Lunghezza barra standard (mm)', type: 'number', def: '2400' } },
+  Kids: { title: 'Scheda Attività Sensoriale', icon: 'baby', color: 'text-pink-400', btn: 'Genera scheda', input: 'Attività Montessori, lavoretti, giochi', outputs: ['Scheda stampabile', 'Età, tempo, disordine', 'Occorrente e sicurezza', 'Idea per il tuo video'], extra: { label: 'Personaggio (facoltativo)', type: 'text', def: 'Sblauz l’Alieno' } },
+  Fitness: { title: 'Kelli-Gen™ Workout Synthesizer', icon: 'dumbbell', color: 'text-cyan-400', btn: 'Genera workout', input: 'Workout virali, EMOM, HIIT, calisthenics', outputs: ['Formati ricorrenti', 'Scheda allenamento', 'Progressione', 'Errori comuni'], extra: { label: 'Durata', type: 'select', options: ['10 minuti', '15 minuti', '30 minuti'], def: '15 minuti' } },
+  Musica: { title: 'Music Lab', icon: 'music', color: 'text-fuchsia-400', btn: 'Genera idea di brano', input: 'Brani e tendenze musicali del momento', outputs: ['Pattern ricorrenti', 'Scheda brano (stile, BPM, tonalità)', 'Struttura in battute', 'Checklist di produzione'] },
+  Architettura: { title: 'AI Architectural Visualizer', icon: 'building', color: 'text-cyan-400', btn: 'Genera moodboard e prompt', input: 'Progetti, render e tendenze di design', outputs: ['Tendenze ricorrenti', 'Moodboard', 'Prompt per Midjourney, Lumion, Unreal', 'Scheda progetto'] },
+  Ingegneria: { title: 'Site Insight', icon: 'hardhat', color: 'text-orange-400', btn: 'Genera scheda tecnica', input: 'Cantieri, macchine, costruzioni', outputs: ['Scheda tecnica', 'Checklist di sicurezza', 'Calcolo rapido', 'Errori frequenti'] },
+};
+const STOP = new Set(['the', 'and', 'for', 'with', 'this', 'that', 'you', 'your', 'from', 'video', 'videos', 'shorts', 'short', 'how', 'what', 'una', 'per', 'con', 'che', 'del', 'della', 'dei', 'come', 'sono', 'più', 'nel', 'alla', 'new', 'best', 'all', 'top', 'are', 'not', 'can', 'will', 'get', 'just', 'here', 'full', 'official', 'trending', 'viral', 'fyp']);
+function hotTopics(videos) {
+  const m = {};
+  videos.forEach(v => {
+    new Set((String(v.title || '').toLowerCase().match(/#?[\p{L}\p{N}]{4,}/gu)) || []).forEach(t => {
+      const k = t.replace(/^#/, '');
+      if (STOP.has(k) || /^\d+$/.test(k)) return;
+      m[k] = m[k] || { n: 0, s: 0 }; m[k].n++; m[k].s += (v.viewsPerDay || 0) + 1;
+    });
+  });
+  let e = Object.entries(m); const multi = e.filter(x => x[1].n >= 2);
+  if (multi.length >= 3) e = multi;
+  return e.sort((a, b) => b[1].s - a[1].s).slice(0, 8).map(x => x[0]);
+}
+function Md({ text }) {
+  const clean = (s) => s.replace(/\*\*/g, '').replace(/`/g, '').trim();
+  const lines = text.split('\n'); const out = []; let i = 0;
+  while (i < lines.length) {
+    const l = lines[i];
+    if (/^\s*\|/.test(l)) {
+      const rows = [];
+      while (i < lines.length && /^\s*\|/.test(lines[i])) { rows.push(lines[i]); i++; }
+      const cells = rows.filter(r => !/^\s*\|[\s:|-]+\|?\s*$/.test(r)).map(r => r.trim().replace(/^\||\|$/g, '').split('|').map(clean));
+      out.push(
+        <div key={'t' + i} className="overflow-x-auto">
+          <table className="w-full text-xs border-collapse"><tbody>
+            {cells.map((r, ri) => <tr key={ri} className={ri === 0 ? 'font-bold text-white' : ''}>{r.map((c, ci) => <td key={ci} className="border border-slate-800 px-2 py-1.5 align-top">{c}</td>)}</tr>)}
+          </tbody></table>
+        </div>
+      );
+      continue;
+    }
+    if (l.trim()) {
+      if (/^#{1,4}\s/.test(l)) out.push(<h4 key={i} className="pt-3 font-bold text-white">{clean(l.replace(/^#{1,4}\s/, ''))}</h4>);
+      else if (/^\s*[-*]\s/.test(l)) out.push(<p key={i} className="pl-3">• {clean(l.replace(/^\s*[-*]\s/, ''))}</p>);
+      else out.push(<p key={i}>{clean(l)}</p>);
+    }
+    i++;
+  }
+  return <div className="space-y-1.5 text-sm text-slate-200">{out}</div>;
+}
+function InsightPanel({ category, videos }) {
+  const cfg = INSIGHTS[category];
+  const [extra, setExtra] = useState('');
+  const [st, setSt] = useState({ status: 'idle', text: '' });
+  const [copied, setCopied] = useState(false);
+  useEffect(() => { setExtra(cfg.extra ? cfg.extra.def : ''); setSt({ status: 'idle', text: '' }); }, [category]);
+  const topics = hotTopics(videos);
+  const generate = async () => {
+    setSt({ status: 'loading', text: '' });
+    try {
+      const { data } = await sb.auth.getSession();
+      const r = await fetch('/api/insights', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + (data.session ? data.session.access_token : '') },
+        body: JSON.stringify({ category, extra, videos: videos.slice(0, 9).map(v => ({ title: v.title, channel: v.channel, viewsPerDay: v.viewsPerDay, description: (v.description || '').slice(0, 300), tags: v.tags || [], comments: v.comments || [] })) }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(r.status === 404 ? 'missing_key' : d.error || 'error');
+      setSt({ status: 'ok', text: d.text });
+    } catch (e) { setSt({ status: e.message === 'missing_key' ? 'nokey' : 'error', text: '' }); }
+  };
+  const copy = () => { try { navigator.clipboard.writeText(st.text); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch (e) {} };
+  return (
+    <Card title={cfg.title} sub={'Dai video in tendenza ottieni un output pronto da usare.'} icon={cfg.icon} color={cfg.color}>
+      <div className="grid sm:grid-cols-2 gap-3 text-xs">
+        <div className="bg-slate-950 border border-slate-800 rounded-xl p-3"><p className="text-slate-500 mb-1">Input: video in tendenza</p><p className="text-slate-200">{cfg.input}</p></div>
+        <div className="bg-slate-950 border border-slate-800 rounded-xl p-3"><p className="text-slate-500 mb-1">Output generato</p><div className="flex flex-wrap gap-1.5">{cfg.outputs.map(o => <span key={o} className="bg-cyan-500/10 text-cyan-300 px-2 py-0.5 rounded-full">{o}</span>)}</div></div>
+      </div>
+      {cfg.note && <p className="text-[11px] text-slate-500">{cfg.note}</p>}
+      {topics.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs text-slate-400">Temi più caldi nei video di ora</p>
+          <div className="flex flex-wrap gap-2">{topics.map(t => <span key={t} className="text-xs bg-slate-800 text-slate-200 px-2.5 py-1 rounded-full">{t}</span>)}</div>
+        </div>
+      )}
+      <div className="flex flex-col sm:flex-row gap-3 sm:items-end">
+        {cfg.extra && (
+          <div className="flex-1">
+            <label className="text-xs text-slate-400">{cfg.extra.label}</label>
+            {cfg.extra.type === 'select'
+              ? <select value={extra} onChange={e => setExtra(e.target.value)} className={inp}>{cfg.extra.options.map(o => <option key={o}>{o}</option>)}</select>
+              : <input type={cfg.extra.type} value={extra} onChange={e => setExtra(e.target.value)} className={inp} />}
+          </div>
+        )}
+        <button onClick={generate} disabled={videos.length === 0 || st.status === 'loading'} className="bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50 text-slate-950 font-semibold px-5 py-2.5 rounded-lg text-sm flex items-center justify-center gap-2">
+          <Icon n="sparkles" /> {st.status === 'loading' ? 'Sto creando...' : cfg.btn + ' dai video in tendenza'}
+        </button>
+      </div>
+      {st.status === 'nokey' && <div className="bg-amber-500/10 border border-amber-500/30 text-amber-200 text-sm rounded-xl p-4">I suggerimenti con AI non sono ancora attivi: manca la chiave Anthropic nelle impostazioni di Vercel.</div>}
+      {st.status === 'error' && <div className="bg-red-500/10 border border-red-500/30 text-red-300 text-sm rounded-xl p-4">Non sono riuscito a generare il contenuto. Riprova tra poco.</div>}
+      {st.status === 'ok' && (
+        <div className="print-area bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-3">
+          <Md text={st.text} />
+          <div className="flex items-center justify-between pt-2 border-t border-slate-800">
+            <p className="text-[10px] text-slate-500">Creato dall’AI da titoli, descrizioni, tag e commenti dei video (non dalle trascrizioni): controlla sempre prima di usarlo.</p>
+            <div className="flex items-center gap-4 shrink-0">
+              <button onClick={() => window.print()} className="text-xs text-cyan-400 flex items-center gap-1.5"><Icon n="print" c="w-3.5 h-3.5" />Stampa / PDF</button>
+              <button onClick={copy} className="text-xs text-cyan-400 flex items-center gap-1.5"><Icon n={copied ? 'check' : 'edit'} c="w-3.5 h-3.5" />{copied ? 'Copiato' : 'Copia'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </Card>
+  );
+}
+
 const fmtN = (n) => n >= 1e6 ? (n / 1e6).toFixed(1).replace('.', ',') + ' Mln' : n >= 1e3 ? Math.round(n / 1e3) + ' K' : String(n);
 
-function TrendingFeed({ category, store }) {
+function TrendingFeed({ category, store, onVideos }) {
   const [st, setSt] = useState({ status: 'loading', videos: [], updatedAt: '' });
   const [tick, setTick] = useState(0);
   useEffect(() => {
     let off = false;
     setSt({ status: 'loading', videos: [], updatedAt: '' });
+    if (onVideos) onVideos([]);
     fetch('/api/trending?category=' + encodeURIComponent(category))
       .then(async r => { const d = await r.json().catch(() => ({})); if (!r.ok) throw new Error(r.status === 404 ? 'missing_key' : d.error || 'error'); return d; })
-      .then(d => { if (!off) setSt({ status: 'ok', videos: d.videos, updatedAt: d.updatedAt }); })
+      .then(d => { if (!off) { setSt({ status: 'ok', videos: d.videos, updatedAt: d.updatedAt }); if (onVideos) onVideos(d.videos); } })
       .catch(e => { if (!off) setSt({ status: e.message === 'missing_key' ? 'nokey' : 'error', videos: [], updatedAt: '' }); });
     return () => { off = true; };
   }, [category, tick]);
@@ -400,7 +403,7 @@ function TrendingFeed({ category, store }) {
       {st.status === 'error' && <div className="bg-red-500/10 border border-red-500/30 text-red-300 text-sm rounded-xl p-4">Non riesco a leggere le tendenze in questo momento. Riprova tra poco con “Aggiorna”.</div>}
       {st.status === 'ok' && st.videos.length === 0 && <p className="text-sm text-slate-500">Nessun video trovato per questa categoria.</p>}
       {st.status === 'ok' && st.videos.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-3">
           {st.videos.map((v, i) => (
             <div key={v.id} className="bg-slate-900/60 border border-slate-800 rounded-2xl overflow-hidden flex flex-col">
               <a href={v.videoUrl} target="_blank" rel="noopener noreferrer" className="relative block aspect-video bg-slate-800">
@@ -413,8 +416,8 @@ function TrendingFeed({ category, store }) {
                   <h4 className="text-sm font-bold text-white line-clamp-2">{v.title}</h4>
                   <p className="text-xs text-slate-400 mt-1 truncate">{v.channel}</p>
                 </div>
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 text-[10px] font-bold">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <div className="flex items-center gap-2 text-[10px] font-bold flex-wrap">
                     <span className="bg-orange-500/15 text-orange-300 px-2 py-0.5 rounded">🔥 {fmtN(v.viewsPerDay)}/giorno</span>
                     <span className="text-slate-500">{fmtN(v.views)} views</span>
                   </div>
@@ -436,6 +439,7 @@ function App() {
   const [query, setQuery] = useState('');
   const [openId, setOpenId] = useState(null);
   const [showAdd, setShowAdd] = useState(false);
+  const [feedVideos, setFeedVideos] = useState([]);
   const meta = CATEGORIES.find(c => c.key === active);
   const q = query.trim().toLowerCase();
   const list = store.videos.filter(v => v.category === active && (!q || v.title.toLowerCase().includes(q) || (v.personalNotes || '').toLowerCase().includes(q)));
@@ -447,16 +451,7 @@ function App() {
     timestamps: [{ id: uid(), time: '01:00', label: 'Punto chiave iniziale' }],
   });
 
-  const widget = {
-    Fitness: <KelliGenWidget />, Finanza: <FinancialDecoderWidget />, DIY: <MaterialCutWidget />,
-    Kids: <AiViralEngine />, Architettura: <ArchitectureVisualizerWidget />,
-    Tech: <TechWidget />, Musica: <MusicWidget />, Ingegneria: <EngineeringWidget />,
-  }[active] || (
-    <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-10 text-center space-y-2">
-      <h3 className="text-xl font-bold text-white">Dashboard Dedicata: {meta.label}</h3>
-      <p className="text-xs text-slate-400">Organizza e analizza i video di tendenza globali per questa categoria.</p>
-    </div>
-  );
+  const widget = <InsightPanel category={active} videos={feedVideos} />;
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex selection:bg-cyan-500 selection:text-slate-950">
@@ -501,7 +496,7 @@ function App() {
 
         <div className="p-4 md:p-8 space-y-8 flex-1">
           {store.error && <div onClick={store.clearError} className="bg-red-500/10 border border-red-500/30 text-red-300 text-sm rounded-xl p-3 cursor-pointer">{store.error} (tocca per chiudere)</div>}
-          <TrendingFeed category={active} store={store} />
+          <TrendingFeed category={active} store={store} onVideos={setFeedVideos} />
           {widget}
           {store.loading && <p className="text-sm text-slate-400">Carico i tuoi video...</p>}
           {!store.loading && list.length === 0 && <p className="text-sm text-slate-500 text-center py-6">Nessun video in questa categoria: salva un video dal feed in tendenza oppure aggiungi un link.</p>}
