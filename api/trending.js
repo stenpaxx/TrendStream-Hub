@@ -1,12 +1,12 @@
 // Funzione Vercel: GET /api/trending?category=Fitness
 // Legge i video in tendenza da YouTube. La chiave segreta sta nelle variabili d'ambiente di Vercel.
 const QUERIES = {
-  Fitness: 'allenamento workout fitness',
-  Tech: 'intelligenza artificiale tecnologia novità',
+  Fitness: 'workout allenamento fitness',
+  Tech: 'AI tecnologia novità tech',
   Finanza: 'borsa trading investimenti',
   Architettura: 'architettura design interni',
   Ingegneria: 'ingegneria cantiere costruzioni',
-  DIY: 'fai da te bricolage',
+  DIY: 'fai da te bricolage DIY',
   Kids: 'cartoni animati canzoni per bambini',
 };
 const API = 'https://www.googleapis.com/youtube/v3/';
@@ -36,9 +36,9 @@ module.exports = async (req, res) => {
       // Classifica ufficiale YouTube "Più popolari" per la musica in Italia
       ({ items } = await yt('videos', { part, chart: 'mostPopular', videoCategoryId: '10', regionCode: 'IT', maxResults: '12' }, key));
     } else {
-      // Video degli ultimi 7 giorni più visti per quell'argomento
+      // Video degli ultimi 7 giorni più visti per quell'argomento (in tutte le lingue)
       const since = new Date(Date.now() - 7 * 864e5).toISOString();
-      const s = await yt('search', { part: 'snippet', q: QUERIES[category], type: 'video', order: 'viewCount', publishedAfter: since, regionCode: 'IT', relevanceLanguage: 'it', safeSearch: 'moderate', maxResults: '15' }, key);
+      const s = await yt('search', { part: 'snippet', q: QUERIES[category], type: 'video', order: 'viewCount', publishedAfter: since, safeSearch: 'moderate', maxResults: '50' }, key);
       const ids = s.items.map((i) => i.id.videoId).join(',');
       ({ items } = ids ? await yt('videos', { part, id: ids }, key) : { items: [] });
     }
@@ -52,10 +52,19 @@ module.exports = async (req, res) => {
         videoUrl: 'https://www.youtube.com/watch?v=' + v.id,
         duration: duration(v.contentDetails && v.contentDetails.duration),
         views, viewsPerDay: Math.round(views / days), publishedAt: v.snippet.publishedAt,
+        description: String(v.snippet.description || '').slice(0, 400),
+        tags: (v.snippet.tags || []).slice(0, 8),
       };
     });
     if (category !== 'Musica') videos.sort((a, b) => b.viewsPerDay - a.viewsPerDay);
     videos = videos.slice(0, 9);
+    // Commenti più rilevanti (API ufficiale, 1 unità di quota a video). Se i commenti sono disattivati, si prosegue.
+    await Promise.all(videos.map(async (v) => {
+      try {
+        const c = await yt('commentThreads', { part: 'snippet', videoId: v.id, order: 'relevance', maxResults: '3', textFormat: 'plainText' }, key);
+        v.comments = c.items.map((i) => String(i.snippet.topLevelComment.snippet.textDisplay || '').slice(0, 160));
+      } catch (e) { v.comments = []; }
+    }));
     // Cache di 6 ore: risparmia la quota gratuita di YouTube
     res.setHeader('Cache-Control', 's-maxage=21600, stale-while-revalidate=43200');
     res.status(200).json({ category, updatedAt: new Date().toISOString(), videos });
